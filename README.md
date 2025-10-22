@@ -93,7 +93,40 @@ const fp = await loadFingerprint({
   mode: 'specific',
   filename: 'fingerprint-chrome-2025-10-22-abc123.json'
 });
+
+// Generate a fully synthetic fingerprint (pure mode is the default)
+const synthetic = await loadFingerprint({
+  mode: 'generated',
+  seed: 'demo-seed',   // optional for deterministic output
+});
+
+// Generate a seeded fingerprint that anchors to a captured template
+const seeded = await loadFingerprint({
+  mode: 'generated',
+  generatedMode: 'seeded',
+  seed: 'demo-seed',
+});
+
 ```
+
+### Generate Single-Use Synthetic Fingerprints
+
+You can also create stand-alone synthetic fingerprints without loading them through code:
+
+```bash
+# Preview a pure fingerprint (default mode; JSON printed to stdout)
+node generate-fingerprint.js
+
+# Generate a seeded fingerprint and save it
+node generate-fingerprint.js --mode seeded --seed demo --save
+```
+
+Synthetic fingerprints are tagged with `source: "synthetic"` and filenames starting with `fingerprint-s-`.
+
+- **Pure mode (default)** composes an entirely new fingerprint from the distributions and heuristic defaults, keeping operating-system/browser pairings and hardware characteristics plausible even for scenarios we have no direct captures for.
+- **Seeded mode** reuses a captured fingerprint as structural scaffolding, then mutates key attributes using the weighted distributions to stay realistic without drifting too far from observed data.
+
+Both modes sample operating systems, browsers, languages, timezones, and version details from the CSVs in `distribution_data/`.
 
 ## Troubleshooting
 

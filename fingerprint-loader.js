@@ -3,14 +3,17 @@
 
 const fs = require('fs/promises');
 const path = require('path');
+const { generateFingerprint } = require('./generate-fingerprint');
 
 const FINGERPRINTS_DIR = 'fingerprints';
 
 /**
  * Load a fingerprint from the collection
  * @param {Object} options - Loading options
- * @param {string} options.mode - 'random', 'first', or 'specific'
+ * @param {string} options.mode - 'random', 'first', 'specific', or 'generated'
  * @param {string} options.filename - Required if mode is 'specific'
+ * @param {string|number} options.seed - Optional seed for deterministic generation
+ * @param {string} options.generatedMode - 'seeded' or 'pure' when mode is 'generated'
  * @returns {Promise<Object>} The loaded fingerprint object
  */
 async function loadFingerprint(options = {}) {
@@ -33,6 +36,18 @@ async function loadFingerprint(options = {}) {
   let selectedFile;
 
   switch (mode) {
+    case 'generated': {
+      const synthetic = await generateFingerprint({
+        seed: options.seed,
+        mode: options.generatedMode || 'pure',
+      });
+      console.log(`🧪 Generated fingerprint (mode: ${mode}/${options.generatedMode || 'pure'})`);
+      console.log(`   Browser: ${synthetic.browserName || 'N/A'}`);
+      console.log(`   Platform: ${synthetic.navigator?.platform || 'N/A'}`);
+      console.log(`   GPU: ${synthetic.webgl?.renderer || 'N/A'}`);
+      return synthetic;
+    }
+
     case 'first':
       selectedFile = fingerprintFiles[0];
       break;
