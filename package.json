@@ -1,0 +1,21 @@
+{
+  "name": "browser-fingerprint-capture",
+  "version": "1.0.0",
+  "description": "Automated browser fingerprint capture tool for Windows, Mac, and Linux",
+  "main": "capture-real-fingerprint.js",
+  "scripts": {
+    "capture": "node capture-real-fingerprint.js",
+    "postinstall": "npx playwright install"
+  },
+  "keywords": [
+    "fingerprint",
+    "browser",
+    "automation",
+    "playwright"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.56.1"
+  }
+}
