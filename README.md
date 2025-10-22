@@ -1,167 +1,113 @@
-# Browser Fingerprint Capture Tool
+# Browser Fingerprint Generator
 
-Automated tool to capture real browser fingerprints from all installed browsers on Windows, Mac, and Linux.
+Synthetic browser fingerprints for testing, research, and model training. The repo ships with a pure generator that composes fully synthetic fingerprints from weighted distributions, plus an optional seeded mode that mutates real captures. You can still collect real fingerprints locally, but generation is the primary workflow.
 
-## What It Does
+## Highlights
 
-- 🔍 **Auto-discovers** all installed browsers (Chrome, Firefox, Brave, Edge, Safari)
-- 🌐 **Captures fingerprints** including GPU, screen, hardware, timezone, plugins, etc.
-- 💾 **Saves as JSON** files for programmatic use
-- 🚫 **Skips duplicates** automatically
-- 🖥️ **Cross-platform** - works on Windows, Mac, and Linux
+- 🎯 **Pure mode (default)** – builds an entire fingerprint (UA, platform, hardware, screen, WebGL, canvas, audio, plugins, feature flags, etc.) by sampling the distributions in `distribution_data/` and curated hardware/device pools.
+- 🧬 **Seeded mode (opt-in)** – starts from a captured fingerprint and mutates it with the same distributions for realistic “variations of a real device”.
+- 🧳 **Distribution-driven** – OS/browser/language/timezone/version weights live in CSVs so you can rebalance or extend without editing code.
+- 🧪 **Programmatic loader** – `loadFingerprint()` can hand you random, specific, seeded, or generated fingerprints directly in Node scripts.
+- 📸 **Optional capture** – keep using `capture-real-fingerprint.js` when you need fresh ground-truth data for seeding or benchmarking.
 
-## Quick Start
-
-### 1. Install Dependencies
+## Quick Start (Pure Generation)
 
 ```bash
-npm install
+# 1. Make sure you have Node 18+
+# 2. Generate a pure fingerprint (prints JSON to stdout)
+node generate-fingerprint.js
+
+# Save the result into fingerprints/
+node generate-fingerprint.js --save
+
+# Deterministic run – same seed, same fingerprint
+node generate-fingerprint.js --seed demo --save
+
+# Opt into seeded mode when you want template-based output
+node generate-fingerprint.js --mode seeded --seed demo --save
 ```
 
-This will:
-- Install Playwright
-- Automatically download required browser binaries
-
-### 2. Capture Fingerprints
-
-```bash
-npm run capture
-```
-
-Or:
-```bash
-node capture-real-fingerprint.js
-```
-
-### 3. What Happens
-
-The tool will:
-1. Scan your system for installed browsers
-2. Launch each browser one by one (you'll see windows open)
-3. Capture detailed fingerprint data
-4. Save unique fingerprints to `fingerprints/` directory
-5. Skip any duplicates
-
-### 4. Collect Results
-
-After running, send the entire `fingerprints/` folder to your team.
-
-## Supported Browsers
-
-- ✅ **Google Chrome** (all platforms)
-- ✅ **Firefox** (all platforms)
-- ✅ **Microsoft Edge** (Windows/Mac/Linux)
-- ✅ **Brave Browser** (all platforms)
-- ✅ **Safari** (Mac only)
-
-## Output Files
-
-Fingerprints are saved as JSON files with names like:
+Generated files live under `fingerprints/` and follow the naming pattern:
 
 ```
 fingerprints/
-├── fingerprint-chrome-2025-10-22-abc123def456.json
-├── fingerprint-firefox-2025-10-22-789ghi012jkl.json
-└── fingerprint-brave-2025-10-22-mno345pqr678.json
+└── fingerprint-s-chrome-2025-10-22-xxxx.json
 ```
 
-Each file contains:
-- Navigator properties (userAgent, platform, language, etc.)
-- Screen dimensions and color depth
-- WebGL vendor and renderer (GPU info)
-- Canvas and audio fingerprints
-- Hardware info (cores, memory)
-- Timezone and locale
-- Installed plugins and MIME types
-- Feature detection (IndexedDB, localStorage, etc.)
+Each JSON contains the full fingerprint payload, and `sourceMetadata` records how it was generated (mode, sampled OS/browser/version, seed, template filename if any).
 
-## Using Captured Fingerprints
-
-The `fingerprint-loader.js` module provides easy access to captured fingerprints:
+## Using the Loader
 
 ```javascript
 const { loadFingerprint } = require('./fingerprint-loader');
 
-// Load a random fingerprint
-const fp = await loadFingerprint();
+// Pure synthetic (default)
+const pure = await loadFingerprint({ mode: 'generated' });
 
-// Load the first fingerprint
-const fp = await loadFingerprint({ mode: 'first' });
-
-// Load a specific fingerprint
-const fp = await loadFingerprint({
-  mode: 'specific',
-  filename: 'fingerprint-chrome-2025-10-22-abc123.json'
-});
-
-// Generate a fully synthetic fingerprint (pure mode is the default)
-const synthetic = await loadFingerprint({
+// Deterministic pure
+const deterministic = await loadFingerprint({
   mode: 'generated',
-  seed: 'demo-seed',   // optional for deterministic output
+  seed: 'demo',
 });
 
-// Generate a seeded fingerprint that anchors to a captured template
+// Seeded variant based on a captured template
 const seeded = await loadFingerprint({
   mode: 'generated',
   generatedMode: 'seeded',
-  seed: 'demo-seed',
+  seed: 'demo',
 });
 
+// Classic usage still works
+const randomCapture = await loadFingerprint();
+const specific = await loadFingerprint({ mode: 'specific', filename: 'fingerprint-chrome-2025-10-22-abc123.json' });
 ```
 
-### Generate Single-Use Synthetic Fingerprints
+## Distribution Data
 
-You can also create stand-alone synthetic fingerprints without loading them through code:
+The generator samples everything from the CSVs in `distribution_data/`:
+
+| File | Purpose |
+|------|---------|
+| `os.csv` | Base OS weights (android, ios, windows, mac os, gnu/linux, …) |
+| `browser.csv` | Base browser weights + compatibility enforcement |
+| `language.csv` | Primary language code weights |
+| `timezone.csv` | Timezone weights (`UTC±HH:MM`) |
+| `os_*.csv` | OS-specific version detail weights (e.g., Android version numbers) |
+| `browser_*.csv` | Browser-specific version detail weights |
+
+Edit or add rows to rebalance the synthetic population—no code changes needed. The generator combines those weights with curated pools (device names, hardware capabilities, screen presets, WebGL profiles, plugin/mime libraries) to build cohesive fingerprints.
+
+## Optional: Capture Real Fingerprints
+
+The original capture tooling remains for when you need actual device data (e.g., to enrich seeded mode or compare against synthetics).
 
 ```bash
-# Preview a pure fingerprint (default mode; JSON printed to stdout)
-node generate-fingerprint.js
-
-# Generate a seeded fingerprint and save it
-node generate-fingerprint.js --mode seeded --seed demo --save
+npm install
+npm run capture        # or: node capture-real-fingerprint.js
 ```
 
-Synthetic fingerprints are tagged with `source: "synthetic"` and filenames starting with `fingerprint-s-`.
+What happens:
 
-- **Pure mode (default)** composes an entirely new fingerprint from the distributions and heuristic defaults, keeping operating-system/browser pairings and hardware characteristics plausible even for scenarios we have no direct captures for.
-- **Seeded mode** reuses a captured fingerprint as structural scaffolding, then mutates key attributes using the weighted distributions to stay realistic without drifting too far from observed data.
+1. Detect installed browsers (Chrome, Firefox, Brave, Edge, Safari).
+2. Launch each browser via Playwright (visible windows will open).
+3. Capture navigator/screen/hardware/WebGL/canvas/audio/plugins/mime/feature data.
+4. Save unique results to `fingerprints/` (existing files aren’t overwritten).
 
-Both modes sample operating systems, browsers, languages, timezones, and version details from the CSVs in `distribution_data/`.
+## Project Layout
 
-## Troubleshooting
-
-**No browsers found?**
-- Make sure you have at least one supported browser installed
-- The tool checks common installation paths and your system PATH
-
-**Browser fails to launch?**
-- **Firefox**: Uses Playwright's bundled version (this is normal and expected)
-- **Chrome/Brave/Edge**: Should use your actual installed browsers
-
-**"Duplicate fingerprint - skipping"?**
-- Normal if you've already captured from this machine
-- Only unique fingerprints are saved
-
-**Permission errors?**
-- Make sure you have permission to read browser executables
-- On Linux, browsers should be in standard paths or PATH
+| Path | Description |
+|------|-------------|
+| `generate-fingerprint.js` | CLI + module for generating pure/seeded fingerprints |
+| `fingerprint-loader.js` | Helper for programmatic loading/generation |
+| `distribution_data/` | CSVs defining weighted distributions |
+| `capture-real-fingerprint.js` | Playwright-driven capture script (optional) |
+| `browser-discovery.js` | Cross-platform browser detection |
+| `fingerprints/` | Captured and generated output (git-ignored) |
 
 ## Requirements
 
-- **Node.js** 14 or higher
-- At least one supported browser installed
-- ~300MB disk space for Playwright browser binaries
-
-## Dependencies
-
-- `playwright` (^1.56.1) - Browser automation library
-
-## Files
-
-- `capture-real-fingerprint.js` - Main capture script
-- `browser-discovery.js` - Cross-platform browser detection
-- `fingerprint-loader.js` - Utility for loading captured fingerprints
-- `package.json` - Dependencies and scripts
+- Node.js 18+ (pure generation uses only built-ins; Playwright capture still works with Node 14+ if you need it).
+- Optional: local browsers installed when running the capture script.
 
 ## License
 
