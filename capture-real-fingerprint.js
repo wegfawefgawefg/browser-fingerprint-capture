@@ -44,9 +44,7 @@ async function captureBrowserFingerprint(browserName, browserPath) {
     // Special handling for Firefox - Playwright needs its own patched Firefox
     if (browserName === 'firefox' || browserName === 'safari') {
       console.log(
-        `ℹ️  Note: Using Playwright's bundled ${playwrightType} (your system ${titleCase(
-          browserName
-        )} isn't compatible)`
+        `ℹ️  Note: Using Playwright's bundled ${playwrightType} (your system ${browserName} isn't compatible)`
       );
       browser = await playwrightBrowser.launch({
         headless: false,
