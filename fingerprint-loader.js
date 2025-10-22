@@ -107,5 +107,6 @@ module.exports = {
   loadFingerprint,
   listFingerprints,
   getFingerprintCount,
+  generateFingerprint,
   FINGERPRINTS_DIR,
 };

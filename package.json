@@ -2,9 +2,10 @@
   "name": "browser-fingerprint-capture",
   "version": "1.0.0",
   "description": "Automated browser fingerprint capture tool for Windows, Mac, and Linux",
-  "main": "capture-real-fingerprint.js",
+  "main": "fingerprint-loader.js",
   "scripts": {
     "capture": "node capture-real-fingerprint.js",
+    "generate": "node generate-fingerprint.js",
     "postinstall": "npx playwright install"
   },
   "keywords": [
