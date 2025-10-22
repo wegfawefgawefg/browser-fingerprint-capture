@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 
 # Captured fingerprints (local only)
 fingerprints/
+amiunique/

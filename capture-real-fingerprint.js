@@ -42,10 +42,15 @@ async function captureBrowserFingerprint(browserName, browserPath) {
     console.log(`🔧 Attempting to launch with executablePath: ${browserPath}`);
 
     // Special handling for Firefox - Playwright needs its own patched Firefox
-    if (browserName === 'firefox') {
-      console.log(`ℹ️  Note: Using Playwright's bundled Firefox (your system Firefox isn't compatible)`);
+    if (browserName === 'firefox' || browserName === 'safari') {
+      console.log(
+        `ℹ️  Note: Using Playwright's bundled ${playwrightType} (your system ${titleCase(
+          browserName
+        )} isn't compatible)`
+      );
       browser = await playwrightBrowser.launch({
         headless: false,
+        timeout: 30000, // 30 second timeout
       });
     } else {
       browser = await playwrightBrowser.launch({
