@@ -19,7 +19,20 @@ const FINGERPRINTS_DIR = 'fingerprints';
 async function loadFingerprint(options = {}) {
   const { mode = 'random', filename = null } = options;
 
-  // Get all fingerprint files
+  // If mode is 'generated', skip reading the fingerprints directory
+  if (mode === 'generated') {
+    const synthetic = await generateFingerprint({
+      seed: options.seed,
+      mode: options.generatedMode || 'pure',
+    });
+    console.log(`🧪 Generated fingerprint (mode: ${mode}/${options.generatedMode || 'pure'})`);
+    console.log(`   Browser: ${synthetic.browserName || 'N/A'}`);
+    console.log(`   Platform: ${synthetic.navigator?.platform || 'N/A'}`);
+    console.log(`   GPU: ${synthetic.webgl?.renderer || 'N/A'}`);
+    return synthetic;
+  }
+
+  // Get all fingerprint files for other modes
   let files;
   try {
     files = await fs.readdir(FINGERPRINTS_DIR);
@@ -36,17 +49,6 @@ async function loadFingerprint(options = {}) {
   let selectedFile;
 
   switch (mode) {
-    case 'generated': {
-      const synthetic = await generateFingerprint({
-        seed: options.seed,
-        mode: options.generatedMode || 'pure',
-      });
-      console.log(`🧪 Generated fingerprint (mode: ${mode}/${options.generatedMode || 'pure'})`);
-      console.log(`   Browser: ${synthetic.browserName || 'N/A'}`);
-      console.log(`   Platform: ${synthetic.navigator?.platform || 'N/A'}`);
-      console.log(`   GPU: ${synthetic.webgl?.renderer || 'N/A'}`);
-      return synthetic;
-    }
 
     case 'first':
       selectedFile = fingerprintFiles[0];
